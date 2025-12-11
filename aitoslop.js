@@ -30,7 +30,7 @@
         }
         
         // Check for form elements
-        if (element.closest('form input, form textarea, form select')) {
+        if (element.closest && element.closest('form input, form textarea, form select')) {
             return true;
         }
         
@@ -68,25 +68,64 @@
             }
             
             const originalText = textNode.textContent;
+            let newText = originalText;
+            let replacements = 0;
             
-            // Skip if text contains "AI slop" (case-insensitive)
-            if (/AI\s+slop/i.test(originalText)) {
-                return false;
-            }
+            // First: Replace "Apple Intelligence" with "Apple Slop" (case-insensitive, preserve case)
+            newText = newText.replace(/\bApple(\s+)Intelligence\b/gi, function(match, whitespace) {
+                replacements++;
+                // Preserve case of "Apple" and "Intelligence"
+                const applePart = match.includes('apple') ? 'apple' : 'Apple';
+                const intelligencePart = match.toLowerCase().includes('intelligence') ? 
+                    (match.includes('Intelligence') ? 'Slop' : 'slop') : 'Slop';
+                return applePart + whitespace + intelligencePart;
+            });
             
-            // Replace "AI" with "Slop" (case-insensitive, but preserve original case)
-            // Use negative lookbehind and lookahead to avoid "AI slop" patterns
-            const newText = originalText
-                .replace(/\bAI\b(?!\s+slop)/gi, function(match) {
-                    // Preserve original case
-                    if (match === 'AI') return 'Slop';
-                    if (match === 'ai') return 'slop';
-                    if (match === 'Ai') return 'Slop';
-                    if (match === 'aI') return 'slop';
-                    return 'Slop'; // fallback
-                });
+            // Second: Replace "Artificial Intelligence" with "Slop" (case-insensitive, preserve case)
+            newText = newText.replace(/\bArtificial(\s+)Intelligence\b/gi, function(match, whitespace) {
+                replacements++;
+                // Preserve case based on "Artificial"
+                const isCapitalized = match[0] === 'A';
+                return isCapitalized ? 'Slop' : 'slop';
+            });
             
-            if (originalText !== newText) {
+            // Third: Replace "AI slop" with "slop slop" (case-insensitive)
+            newText = newText.replace(/\bAI(\s+)slop\b/gi, function(match, whitespace) {
+                replacements++;
+                // Preserve the original case of "slop" and whitespace
+                const slopPart = match.toLowerCase().includes('slop') ? 
+                    (match.includes('Slop') ? 'Slop' : 'slop') : 'slop';
+                return 'slop' + whitespace + slopPart;
+            });
+            
+            // Fourth: Replace words starting with "AI" + uppercase + lowercase pattern
+            // Example: "AIStor" -> "SlopStor", but not "AIO" or "AIML"
+            newText = newText.replace(/\bAI([A-Z][a-z]+\w*)/g, function(match, trailing) {
+                replacements++;
+                return 'Slop' + trailing;
+            });
+            
+            // Fifth: Replace "A.I." with "Slop" (case-insensitive, preserve case)
+            newText = newText.replace(/\bA\.I\./gi, function(match) {
+                replacements++;
+                // Preserve case based on first letter
+                if (match[0] === 'A') return 'Slop';
+                if (match[0] === 'a') return 'slop';
+                return 'Slop'; // fallback
+            });
+            
+            // Sixth: Replace remaining "AI" with "Slop" (preserve case)
+            newText = newText.replace(/\bAI\b/g, function(match) {
+                replacements++;
+                // Preserve original case
+                if (match === 'AI') return 'Slop';
+                if (match === 'ai') return 'slop';
+                if (match === 'Ai') return 'Slop';
+                if (match === 'aI') return 'slop';
+                return 'Slop'; // fallback
+            });
+            
+            if (replacements > 0) {
                 textNode.textContent = newText;
                 return true;
             }
@@ -144,7 +183,7 @@
         return replacementsMade;
     }
     
-    // Function to handle dynamically added content (for auto mode)
+    // Function to handle dynamically added content
     function observeForChanges() {
         const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
@@ -164,10 +203,12 @@
             });
         });
         
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+        if (document.body) {
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+        }
         
         return observer;
     }
@@ -177,21 +218,16 @@
         const replacements = replaceTextInAllNodes();
         console.log(`AI to Slop: Made ${replacements} replacements`);
         
-        // Set up observer for dynamic content (if in auto mode)
-        if (typeof browser !== 'undefined') {
-            browser.storage.local.get(['autoMode']).then(result => {
-                if (result.autoMode) {
-                    observeForChanges();
-                }
-            }).catch(() => {
-                // Fallback if storage is not available
-                // Don't set up observer for manual mode
-            });
-        }
+        // Always set up observer for dynamic content
+        observeForChanges();
         
         return replacements;
     }
     
     // Start the replacement
-    performReplacements();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', performReplacements);
+    } else {
+        performReplacements();
+    }
 })();
