@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "AI to Slop Replacer",
-  "version": "1.3",
+  "version": "1.3.1",
   "description": "A silly extension that replaces all textual occurences of 'AI' with 'Slop' on web pages!",
   
   "permissions": [
@@ -15,12 +15,13 @@
 
   "browser_specific_settings": {
     "gecko": {
+      "id": "766d3f10-e20a-4c32-9b99-b3d5a09fa6d1",
       "data_collection_permissions": {
         "required": ["none"]
       }
     }
   },
-  
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
