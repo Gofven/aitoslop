@@ -23,15 +23,19 @@
         return !!element.closest('[contenteditable="true"], input, textarea, select');
     }
 
-    const combinedRegex = new RegExp([
+    const caseSensitiveRegex = new RegExp([
+        'AI[A-Z]+[a-z]+',
+        '[A-Z]+[a-z]+AI',
+        'ai',
+        'AI'
+    ].map(s => '\\b' + s + '\\b').join('|'), 'g');
+
+    const inCaseSensitiveRegex = new RegExp([
         'apple intelligence',
         'chatgpt',
         'artificial intelligence',
-        'ai[A-Z][a-z]+',
-        '[A-Z][a-z]+ai',
         'a\\.i\\.',
-        'ai'
-    ].map(s => '\\b' + s.replace(/ /g, '\\s+') + '\\b').join('|'), 'gi');
+    ].map(s => '\\b' + s + '\\b').join('|'), 'g');
 
     function replaceTextInNode(textNode) {
         if (isApplying) return false;
@@ -39,41 +43,45 @@
 
         if (!originalText || originalText.length < 2) return false;
 
-        const newText = originalText.replace(combinedRegex, (match) => {
-            const lower = match.toLowerCase().trim();
+        for (const regex of [caseSensitiveRegex, inCaseSensitiveRegex]) {
 
-            if (lower.includes('apple')) {
-                return match.replace(/intelligence/i, (m) => m[0] === 'I' ? 'Slop' : 'slop');
+            const newText = originalText.replace(regex, (match) => {
+
+                const lower = match.toLowerCase().trim();
+
+                if (lower.includes('apple')) {
+                    return match.replace(/intelligence/i, (m) => m[0] === 'I' ? 'Slop' : 'slop');
+                }
+
+                if (lower === 'chatgpt') {
+                    return match === 'ChatGPT' ? 'ChatSlop' : 'chatslop';
+                }
+
+                if (lower.includes('artificial')) {
+                    return match.startsWith('A') ? 'Slop' : 'slop';
+                }
+
+                if (match.startsWith('AI') && match.length > 2) {
+                    return 'Slop' + match.slice(2);
+                }
+
+                if (match.endsWith('AI') && match.length > 2) {
+                    return match.slice(0, -2) + 'Slop';
+                }
+
+                if (lower === 'a.i.' || match === 'ai' || match === 'AI') {
+                    return match[0] === 'A' ? 'Slop' : 'slop';
+                }
+
+                return match;
+            });
+
+            if (newText !== originalText) {
+                isApplying = true;
+                textNode.textContent = newText;
+                isApplying = false;
+                return true;
             }
-
-            if (lower === 'chatgpt') {
-                return match === 'ChatGPT' ? 'ChatSlop' : 'chatslop';
-            }
-
-            if (lower.includes('artificial')) {
-                return match.startsWith('A') ? 'Slop' : 'slop';
-            }
-
-            if (match.startsWith('AI') && match.length > 2) {
-                return 'Slop' + match.slice(2);
-            }
-
-            if (match.endsWith('AI') && match.length > 2) {
-                return match.slice(0, -2) + 'Slop';
-            }
-
-            if (lower === 'a.i.' || match === 'ai' || match === 'AI') {
-                return match[0] === 'A' ? 'Slop' : 'slop';
-            }
-
-            return match;
-        });
-
-        if (newText !== originalText) {
-            isApplying = true;
-            textNode.textContent = newText;
-            isApplying = false;
-            return true;
         }
         return false;
     }
