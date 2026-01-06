@@ -49,6 +49,10 @@
 
                 const lower = match.toLowerCase().trim();
 
+                if (lower === 'a.i.' || match === 'ai' || match === 'AI') {
+                    return match[0] === 'A' ? 'Slop' : 'slop';
+                }
+
                 if (lower.includes('apple')) {
                     return match.replace(/intelligence/i, (m) => m[0] === 'I' ? 'Slop' : 'slop');
                 }
@@ -67,10 +71,6 @@
 
                 if (match.endsWith('AI') && match.length > 2) {
                     return match.slice(0, -2) + 'Slop';
-                }
-
-                if (lower === 'a.i.' || match === 'ai' || match === 'AI') {
-                    return match[0] === 'A' ? 'Slop' : 'slop';
                 }
 
                 return match;
