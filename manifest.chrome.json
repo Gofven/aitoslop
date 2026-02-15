@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "AI to Slop Replacer",
+  "version": "1.5.1",
+  "description": "A silly extension that replaces all textual occurences of 'AI' with 'Slop' on web pages!",
+  
+  "host_permissions": [
+    "<all_urls>"
+  ],
+
+  "icons": {
+    "64": "icon.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["aitoslop.js"],
+      "run_at": "document_end"
+    }
+  ]
+}
